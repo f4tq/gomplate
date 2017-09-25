@@ -13,6 +13,7 @@ import (
 // GomplateOpts -
 type GomplateOpts struct {
 	version           bool
+	verbose           bool
 	dataSources       []string
 	dataSourceHeaders []string
 	lDelim            string
@@ -23,6 +24,8 @@ type GomplateOpts struct {
 	inputDir    string
 	outputFiles []string
 	outputDir   string
+	partialDir string
+	flattenPartial bool
 }
 
 var opts GomplateOpts
@@ -81,6 +84,12 @@ func initFlags(command *cobra.Command) {
 	command.Flags().StringVar(&opts.inputDir, "input-dir", "", "`directory` which is examined recursively for templates (alternative to --file and --in)")
 	command.Flags().StringArrayVarP(&opts.outputFiles, "out", "o", []string{"-"}, "output `file` name. Omit to use standard output.")
 	command.Flags().StringVar(&opts.outputDir, "output-dir", ".", "`directory` to store the processed templates. Only used for --input-dir")
+
+	command.Flags().StringVar(&opts.partialDir, "partial-dir", "", "`partial directory` which is examined recursively for go templates.  valid template extensions are : .t,.tmpl,.tpl,.txt,html")
+	command.Flags().BoolVar(&opts.flattenPartial, "flatten-partial-name", false, "remove path from partial when naming ")
+
+	command.Flags().BoolVar(&opts.verbose, "verbose", false, "`verbose.  Write extra messages to stderr")
+
 
 	command.Flags().StringArrayVarP(&opts.dataSources, "datasource", "d", nil, "`datasource` in alias=URL form. Specify multiple times to add multiple sources.")
 	command.Flags().StringArrayVarP(&opts.dataSourceHeaders, "datasource-header", "H", nil, "HTTP `header` field in 'alias=Name: value' form to be provided on HTTP-based data sources. Multiples can be set.")

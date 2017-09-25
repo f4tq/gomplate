@@ -42,7 +42,9 @@ func AddStringFuncs(f map[string]interface{}) {
 	f["hasSuffix"] = strings.HasSuffix
 	f["split"] = strings.Split
 	f["splitN"] = strings.SplitN
+	f["join"] = StrNS().Join
 	f["trim"] = strings.Trim
+
 }
 
 // StringFuncs -
@@ -51,6 +53,14 @@ type StringFuncs struct{}
 // ReplaceAll -
 func (f *StringFuncs) ReplaceAll(old, new, s string) string {
 	return strings.Replace(s, old, new, -1)
+}
+func (f *StringFuncs) Join(args ...string) string {
+	sep := args[0]
+	ary := make([]string, len(args)-1)
+	for ii,str := range args[1:]{
+		ary[ii] = str
+	}
+	return strings.Join(ary,sep)
 }
 
 // Contains -

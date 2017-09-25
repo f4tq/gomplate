@@ -17,6 +17,7 @@ import (
 	"github.com/blang/vfs"
 	"github.com/hairyhenderson/gomplate/libkv"
 	"github.com/hairyhenderson/gomplate/vault"
+	"reflect"
 )
 
 // logFatal is defined so log.Fatal calls can be overridden for testing
@@ -193,6 +194,16 @@ func (d *Data) DatasourceExists(alias string) bool {
 	_, ok := d.Sources[alias]
 	return ok
 }
+func transform(v interface{}, key string) interface{} {
+	if key != "" {
+		val := reflect.ValueOf(v)
+		if val.Kind() == reflect.Map {
+			return val.MapIndex(reflect.ValueOf(key))
+		}
+	}
+	return v
+}
+
 
 const plaintext = "text/plain"
 
@@ -203,6 +214,7 @@ func (d *Data) Datasource(alias string, args ...string) interface{} {
 		log.Fatalf("Undefined datasource '%s'", alias)
 	}
 	b, err := d.ReadSource(source, args...)
+
 	if err != nil {
 		logFatalf("Couldn't read datasource '%s': %s", alias, err)
 	}
@@ -210,11 +222,12 @@ func (d *Data) Datasource(alias string, args ...string) interface{} {
 		logFatalf("No value found for %s from datasource '%s'", args, alias)
 	}
 	s := string(b)
+
 	if source.Type == "application/json" {
-		return JSON(s)
+		return transform(JSON(s),source.URL.Fragment)
 	}
 	if source.Type == "application/yaml" {
-		return YAML(s)
+		return transform(YAML(s),source.URL.Fragment)
 	}
 	if source.Type == "text/csv" {
 		return CSV(s)
@@ -272,9 +285,7 @@ func readFile(source *Source, args ...string) ([]byte, error) {
 	if source.FS == nil {
 		source.FS = vfs.OS()
 	}
-
 	p := filepath.FromSlash(source.URL.Path)
-
 	// make sure we can access the file
 	_, err := source.FS.Stat(p)
 	if err != nil {
