@@ -9,6 +9,7 @@ import (
 
 	"strings"
 	"os"
+	"net"
 
 )
 
@@ -30,7 +31,8 @@ func initFuncs(d *data.Data) template.FuncMap {
 	f["series"] = Series
 	f["mult"] = mult
 	f["div"] = div
-
+	f["hostname"] = Hostname
+	f["fqdn"] = fqdn
 	f["HtmlEscape"]= html.HTMLEscapeString
 	f["URLEscape"]= html.URLQueryEscaper
 	f["JsEscape"] = html.JSEscapeString
@@ -39,7 +41,42 @@ func initFuncs(d *data.Data) template.FuncMap {
 	return f
 }
 
+func Hostname() string {
+	h,err := os.Hostname()
+	if err != nil {
+		return ""
+	}
+	return h
+}
+func fqdn() string{
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+
+	addrs, err := net.LookupIP(hostname)
+	if err != nil {
+		return hostname
+	}
+
+	for _, addr := range addrs {
+		if ipv4 := addr.To4(); ipv4 != nil {
+			ip, err := ipv4.MarshalText()
+			if err != nil {
+				return hostname
+			}
+			hosts, err := net.LookupAddr(string(ip))
+			if err != nil || len(hosts) == 0 {
+				return hostname
+			}
+			fqdn := hosts[0]
+			return strings.TrimSuffix(fqdn, ".") // return fqdn without trailing dot
+		}
+	}
+	return hostname
+}
 func Env() map[string]string {
+	os.Hostname()
 	env := make(map[string]string)
 	for _, i := range os.Environ() {
 		sep := strings.Index(i, "=")
